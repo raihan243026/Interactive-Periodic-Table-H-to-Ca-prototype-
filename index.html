@@ -1,0 +1,227 @@
+<!-- Interactive Periodic Table H to Ca -->
+ <!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Periodic Table: H to Ca</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Slate and Sky, with a deep dark mode -->
+    <!-- Application Structure Plan: The application maintains a single-page dashboard structure, with an enhanced navigation bar and footer. The core remains a master-detail layout, where a responsive grid of element tiles (the master) on the left controls the content of a dynamic detail panel (the detail) on the right. A new search bar allows users to filter the element list for quicker access. The light/dark mode toggle provides a custom user experience. This design improves navigability and user comfort while preserving the core task of exploring element properties. The new, non-functional "upload" section is a placeholder to show intent for future development, but its constraints are noted to the user. -->
+    <!-- Visualization & Content Choices: The core information is still textual and conceptual. Goal: Inform, Compare, and now, Filter. Method: Interactive element tiles (HTML/CSS), a dynamic detail panel (HTML/JS), and a search input. Interaction: Clicking tiles updates the panel, typing in the search bar filters the tiles in real-time. Justification: This approach is direct and efficient. Charts are not suitable. The focus is on clear, filterable presentation of facts and equations. Library: Vanilla JS is sufficient for the required DOM manipulation. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .element-tile {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .element-tile:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .element-tile.active {
+            box-shadow: 0 0 0 3px #38bdf8;
+            transform: translateY(-2px);
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .dark .element-tile:hover {
+            box-shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.1), 0 4px 6px -2px rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-200">
+
+    <div class="container mx-auto p-4 md:p-8">
+
+        <nav class="flex items-center justify-between py-4 mb-8">
+            <div class="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">Ionic Elements</div>
+            <div class="flex items-center space-x-4">
+                <input id="search-input" type="text" placeholder="Search elements..." class="p-2 rounded-lg bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors duration-200 w-32 md:w-48">
+                <button id="theme-toggle" class="p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 transition-transform duration-200 hover:scale-110">
+                    <svg id="moon-icon" class="h-6 w-6 text-slate-700 dark:text-slate-400 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                    <svg id="sun-icon" class="h-6 w-6 text-slate-700 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </button>
+            </div>
+        </nav>
+
+        <header class="text-center mb-8 md:mb-12">
+            <h1 class="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white">Ionic Charge Calculator</h1>
+            <p class="text-slate-600 mt-2 text-lg dark:text-slate-400">An interactive guide to the first 20 elements.</p>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-1">
+                <div class="bg-white p-6 rounded-xl shadow-md dark:bg-slate-800">
+                    <h2 class="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Select an Element</h2>
+                    <p class="text-slate-500 mb-6 text-sm dark:text-slate-400">Click on an element below to see its common ionic charge and formation equation.</p>
+                    <div id="element-grid" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-5 gap-3">
+                        <!-- Element tiles will be injected here by JavaScript -->
+                    </div>
+                </div>
+                <div class="mt-8 bg-white p-6 rounded-xl shadow-md dark:bg-slate-800">
+                    <h2 class="text-xl font-semibold mb-4 text-slate-900 dark:text-white">Coder Section</h2>
+                    <p class="text-slate-500 mb-4 text-sm dark:text-slate-400">In a full application, you could upload new data sources here, such as a CSV or PDF. This feature requires a backend server to process the files and is not functional in this single-file demonstration.</p>
+                    <button class="w-full bg-slate-200 text-slate-600 font-bold py-3 px-4 rounded-lg cursor-not-allowed dark:bg-slate-700 dark:text-slate-400">
+                        Upload Files (Non-functional)
+                    </button>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2">
+                <div id="details-panel" class="bg-white p-6 md:p-8 rounded-xl shadow-md min-h-[300px] flex flex-col justify-center dark:bg-slate-800">
+                    <!-- Details will be injected here -->
+                    <div id="initial-message" class="text-center">
+                        <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h3 class="mt-2 text-lg font-medium text-slate-900 dark:text-white">Select an element</h3>
+                        <p class="mt-1 text-slate-500 dark:text-slate-400">Choose an element from the grid to view its details.</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <footer class="text-center mt-12 text-slate-500 text-sm dark:text-slate-400">
+            <p>Built to demonstrate interactive data exploration from a static report.</p>
+            <div class="mt-2 flex justify-center space-x-4">
+                <a href="#" class="hover:text-sky-500 transition-colors duration-200">GitHub</a>
+                <a href="#" class="hover:text-sky-500 transition-colors duration-200">LinkedIn</a>
+                <a href="#" class="hover:text-sky-500 transition-colors duration-200">Twitter</a>
+            </div>
+        </footer>
+
+    </div>
+
+    <script>
+        const elementsData = [
+            { name: 'Hydrogen', symbol: 'H', atomic: 1, group: 1, charge: '+1 or -1', equation: 'H - e⁻ = H⁺ <br> H + e⁻ = H⁻' },
+            { name: 'Helium', symbol: 'He', atomic: 2, group: 18, charge: '0', equation: 'No common ion' },
+            { name: 'Lithium', symbol: 'Li', atomic: 3, group: 1, charge: '+1', equation: 'Li - e⁻ = Li⁺' },
+            { name: 'Beryllium', symbol: 'Be', atomic: 4, group: 2, charge: '+2', equation: 'Be - 2e⁻ = Be²⁺' },
+            { name: 'Boron', symbol: 'B', atomic: 5, group: 13, charge: '+3', equation: 'B - 3e⁻ = B³⁺' },
+            { name: 'Carbon', symbol: 'C', atomic: 6, group: 14, charge: '±4', equation: 'Usually forms covalent bonds' },
+            { name: 'Nitrogen', symbol: 'N', atomic: 7, group: 15, charge: '-3', equation: 'N + 3e⁻ = N³⁻' },
+            { name: 'Oxygen', symbol: 'O', atomic: 8, group: 16, charge: '-2', equation: 'O + 2e⁻ = O²⁻' },
+            { name: 'Fluorine', symbol: 'F', atomic: 9, group: 17, charge: '-1', equation: 'F + e⁻ = F⁻' },
+            { name: 'Neon', symbol: 'Ne', atomic: 10, group: 18, charge: '0', equation: 'No common ion' },
+            { name: 'Sodium', symbol: 'Na', atomic: 11, group: 1, charge: '+1', equation: 'Na - e⁻ = Na⁺' },
+            { name: 'Magnesium', symbol: 'Mg', atomic: 12, group: 2, charge: '+2', equation: 'Mg - 2e⁻ = Mg²⁺' },
+            { name: 'Aluminum', symbol: 'Al', atomic: 13, group: 13, charge: '+3', equation: 'Al - 3e⁻ = Al³⁺' },
+            { name: 'Silicon', symbol: 'Si', atomic: 14, group: 14, charge: '±4', equation: 'Usually forms covalent bonds' },
+            { name: 'Phosphorus', symbol: 'P', atomic: 15, group: 15, charge: '-3', equation: 'P + 3e⁻ = P³⁻' },
+            { name: 'Sulfur', symbol: 'S', atomic: 16, group: 16, charge: '-2', equation: 'S + 2e⁻ = S²⁻' },
+            { name: 'Chlorine', symbol: 'Cl', atomic: 17, group: 17, charge: '-1', equation: 'Cl + e⁻ = Cl⁻' },
+            { name: 'Argon', symbol: 'Ar', atomic: 18, group: 18, charge: '0', equation: 'No common ion' },
+            { name: 'Potassium', symbol: 'K', atomic: 19, group: 1, charge: '+1', equation: 'K - e⁻ = K⁺' },
+            { name: 'Calcium', symbol: 'Ca', atomic: 20, group: 2, charge: '+2', equation: 'Ca - 2e⁻ = Ca²⁺' },
+        ];
+
+        const elementGrid = document.getElementById('element-grid');
+        const detailsPanel = document.getElementById('details-panel');
+        const searchInput = document.getElementById('search-input');
+        const themeToggle = document.getElementById('theme-toggle');
+        const moonIcon = document.getElementById('moon-icon');
+        const sunIcon = document.getElementById('sun-icon');
+        let activeTile = null;
+
+        function getGroupColor(group) {
+            if (group === 1) return 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200';
+            if (group === 2) return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+            if (group >= 13 && group <= 17) return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200';
+            if (group === 18) return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200';
+            return 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200';
+        }
+
+        function displayElementDetails(element) {
+            detailsPanel.innerHTML = '';
+            const content = `
+                <div class="fade-in">
+                    <div class="flex flex-col sm:flex-row items-center justify-between mb-4">
+                        <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">${element.name}</h2>
+                        <span class="text-5xl font-black text-slate-300 dark:text-slate-500">${element.symbol}</span>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-3 rounded-lg bg-slate-50 dark:bg-slate-700">
+                            <span class="font-medium text-slate-600 dark:text-slate-400">Atomic Number</span>
+                            <span class="font-bold text-lg text-slate-800 dark:text-slate-100">${element.atomic}</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 rounded-lg bg-slate-50 dark:bg-slate-700">
+                            <span class="font-medium text-slate-600 dark:text-slate-400">Common Ionic Charge</span>
+                            <span class="font-bold text-lg text-sky-600 dark:text-sky-400">${element.charge}</span>
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+                        <h3 class="text-lg font-semibold mb-2 text-slate-900 dark:text-white">Ion Formation</h3>
+                        <div class="text-center p-4 rounded-lg bg-slate-100 dark:bg-slate-700">
+                            <p class="text-xl font-mono text-slate-700 dark:text-slate-200">${element.equation}</p>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-3 text-center dark:text-slate-400">This equation shows how a neutral atom gains or loses electrons (e⁻) to form an ion.</p>
+                    </div>
+                </div>
+            `;
+            detailsPanel.innerHTML = content;
+        }
+
+        function renderElementTiles(data) {
+            elementGrid.innerHTML = '';
+            data.forEach((element, index) => {
+                const tile = document.createElement('button');
+                tile.className = `element-tile p-2 rounded-lg text-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 ${getGroupColor(element.group)}`;
+                tile.innerHTML = `
+                    <div class="font-bold text-xl">${element.symbol}</div>
+                    <div class="text-xs">${element.name}</div>
+                `;
+                tile.addEventListener('click', () => {
+                    if (activeTile) {
+                        activeTile.classList.remove('active');
+                    }
+                    tile.classList.add('active');
+                    activeTile = tile;
+                    displayElementDetails(element);
+                });
+                elementGrid.appendChild(tile);
+            });
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filteredElements = elementsData.filter(element => 
+                element.name.toLowerCase().includes(query) || 
+                element.symbol.toLowerCase().includes(query)
+            );
+            renderElementTiles(filteredElements);
+        });
+
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            if (isDark) {
+                moonIcon.classList.add('hidden');
+                sunIcon.classList.remove('hidden');
+            } else {
+                moonIcon.classList.remove('hidden');
+                sunIcon.classList.add('hidden');
+            }
+        });
+
+        renderElementTiles(elementsData);
+
+    </script>
+</body>
+</html>
+<!-- Interactive Periodic Table H to Ca -->
